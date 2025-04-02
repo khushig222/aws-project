@@ -5,13 +5,13 @@ FROM node:18 AS build-stage
 WORKDIR /app
 
 # Copy package.json and package-lock.json first (to leverage Docker cache)
-COPY package*.json ./
+COPY ./backend/package*.json ./
 
 # Install all dependencies
 RUN npm install
 
 # Copy the entire project
-COPY . .
+COPY backend/. . 
 
 # Stage 2: Production Stage
 FROM node:18
@@ -26,7 +26,7 @@ COPY --from=build-stage /app /app
 RUN npm install --only=production
 
 # Expose the required port
-EXPOSE 3000
+EXPOSE 3008
 
 # Start the application
 CMD ["npm", "start"]

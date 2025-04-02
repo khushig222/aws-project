@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = "us-north-1"
+        AWS_REGION = "eu-north-1"
         AWS_ACCOUNT_ID = "140023382994"
         ECR_REPO_NAME = "myecr-repo"
         IMAGE_TAG = "myecr"
@@ -14,38 +14,64 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/khushig222/aws-project.git'
             }
         }
-
-        stage('Build Docker Image') {
+        stage('Check current user') {
             steps {
-                script {
-                    sh "docker build -t $ECR_REPO_NAME:$IMAGE_TAG ."
+                script{
+                    sh "echo $USER"
                 }
             }
         }
-
+        stage('Check docker version') {
+            steps {
+                script{
+                    sh "docker --version"
+                }
+            }
+        }
+        stage('Check git version') {
+            steps {
+                script{
+                    sh "git --version"
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh "docker build --no-cache -t $ECR_REPO_NAME:$IMAGE_TAG ."
+                }
+            }
+        }
         stage('Login to AWS ECR') {
             steps {
                 script {
                     sh """
                         aws ecr get-login-password --region $AWS_REGION | \
-                        docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                        docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                     """
                 }
             }
         }
-
         stage('Tag and Push to ECR') {
             steps {
                 script {
                     sh """
-                        docker tag $ECR_REPO_NAME:$IMAGE_TAG \
-                        $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:$IMAGE_TAG
+                        docker tag ${ECR_REPO_NAME}:${IMAGE_TAG} \
+                        ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}
 
-                        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:$IMAGE_TAG
+                        docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}:${IMAGE_TAG}
                     """
                 }
             }
         }
+        stage('Build cleanup') {
+            steps {
+                script {
+                    sh "docker image rm $ECR_REPO_NAME:$IMAGE_TAG ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/$ECR_REPO_NAME:$IMAGE_TAG  -f "
+                }
+            }
+        }
+         
     }
 
     post {

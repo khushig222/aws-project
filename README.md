@@ -1,0 +1,2 @@
+Build and deploy a sample web application with RDS as the backend database server on AWS Cloud with best practices. Make sure to integrate all the technologies that you have learnt in the last 8 weeks.
+Create a multi-stage Jenkins CI/CD pipeline to build the code using containerization. Build code needs to push to the ECR repository after a successful build.
